@@ -11,7 +11,7 @@ npm install douganderson444/ipld-car-txs
 ## Usage API
 
 ```js
-import Transaction from 'car-transaction';
+import Transaction from '@douganderson444/ipld-car-txs';
 
 const run = async () => {
 	// start a basic transaction
