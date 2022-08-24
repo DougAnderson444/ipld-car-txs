@@ -1,4 +1,5 @@
 <script lang="ts">
+	// @ts-ignore
 	import { onMount, setContext } from 'svelte';
 	import { flip } from 'svelte/animate';
 
