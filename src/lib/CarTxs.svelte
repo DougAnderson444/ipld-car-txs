@@ -1,5 +1,5 @@
 <script>
-	import Transaction from './txs';
+	import Transaction from './index.js';
 
 	let data = { some: 'data' };
 	let out;

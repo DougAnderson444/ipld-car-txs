@@ -1,35 +1,41 @@
 <script lang="ts">
 	import { onMount, setContext } from 'svelte';
-	import { Transaction } from '@douganderson444/ipld-car-txs';
-	import ManageBlocks from './ManageBlocks.svelte';
+	import { flip } from 'svelte/animate';
 
-	import AddBlock from './AddBlock.svelte';
-	import ShowBlocks from './ShowBlocks.svelte';
+	import AddTx from './AddTx.svelte';
+	import LoadTx from './LoadTx.svelte';
+	import { Transaction } from '$lib/index.js';
 
-	export let transactions: Transaction[] = [];
-	export let tx: Transaction | null = null;
+	export let commits: Uint8Array[] = [];
 	export let connectable: Function;
+
+	let tx: Transaction | null = null;
 
 	setContext('connectable', connectable);
 
-	function createTx(): Transaction {
-		console.log({ Transaction });
-		tx = Transaction.create();
-		return tx;
-	}
 	onMount(async () => {
-		if (!transactions.length) {
-			const t = createTx();
-			transactions = [t];
-			console.log({ transactions });
-		}
+		tx = Transaction.create();
 	});
+
+	function handleCommit(e: CustomEvent) {
+		const buffer = e.detail;
+		commits = [...commits, buffer];
+		tx = Transaction.create(); // create new Tx, now that the old one is committed
+	}
 </script>
 
-{#if transactions && transactions.length}
-	{#each transactions as tx}
-		<AddBlock bind:tx />
-		<ShowBlocks {tx} />
-	{/each}
-{:else}No blocks
+<div class="m-4 p-4 border-dashed border-2">
+	<AddTx bind:tx on:commit={handleCommit} />
+</div>
+
+{#if commits && commits.length}
+	<div class="flex flex-col-reverse ">
+		{#each commits as commit, i (i)}
+			<div animate:flip class="m-4 p-2 border-2 border-dashed ">
+				<LoadTx {commit} />
+			</div>
+		{/each}
+	</div>
+{:else}
+	No Commits
 {/if}

@@ -18,7 +18,8 @@
 	}
 	async function handleAdd(event: Event): Promise<void> {
 		if (tx && key && value) {
-			const cid = await tx.add({ [key]: value });
+			const subCID = await tx.add({ [key]: value });
+			const cid = await tx.add({ [key]: subCID });
 			tx = tx;
 		}
 	}

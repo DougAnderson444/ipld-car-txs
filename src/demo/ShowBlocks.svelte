@@ -11,12 +11,12 @@
 		easing: cubicOut
 	});
 
-	tx.on('size', (_) => ($size = tx.size));
+	tx.on('size', (_: Event) => ($size = tx.size));
 </script>
 
 {#if tx?.blocks?.length > 0}
-	<div class="flex flex-row-reverse ">
-		{#each tx.blocks as { value, cid, bytes } (cid)}
+	<div class="flex flex-row">
+		{#each [...tx.blocks].reverse() as { value, cid, bytes } (cid)}
 			<div animate:flip class="mr-1 p-2 border-emerald-50 bg-green-800 text-white rounded-lg w-fit">
 				{#each Object.entries(value) as [key, val]}
 					{key}: {val} ({bytes.length})
