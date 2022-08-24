@@ -1,38 +1,35 @@
-# create-svelte
+# IPLD CAR Transactions (txs)
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+Use IPLD Blocks to add to IPLD one transaction at a time.
 
-## Creating a project
+## API
 
-If you're seeing this, you've probably already done this step. Congrats!
+```js
+import Transaction from 'car-transaction';
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+const run = async () => {
+	// start a basic transaction
+	const t = Transaction.create();
 
-# create a new project in my-app
-npm create svelte@latest my-app
+	const subCID = await t.add({ some: 'data' });
+	await t.add({ sub: subCID });
+	await t.add({ whoops: 'mistake' });
+	t.undo(); // remove the last addition
+	const buffer = await t.commit();
+
+	// read a transaction
+	// the last write is always the root
+	const { root, get } = await Transaction.load(buffer);
+	// root is a cid
+	const { sub } = await get(root);
+	const { some } = await get(sub);
+	// get retrieves the block and decodes it
+	if (some !== 'data') throw new Error('data error');
+};
+
+run();
 ```
 
-## Developing
+## Credits
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+Inspired by [car-transaction](https://github.com/mikeal/car-transaction)
