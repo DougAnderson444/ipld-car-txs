@@ -1,5 +1,4 @@
 <script lang="ts">
-	// @ts-ignore
 	import { onMount, setContext } from 'svelte';
 	import { flip } from 'svelte/animate';
 
@@ -7,20 +6,30 @@
 	import LoadTx from './LoadTx.svelte';
 	import { Transaction } from '$lib/index.js';
 
+	import type { DagRepo } from '$lib/dagRepo';
+
 	export let commits: Uint8Array[] = [];
 	export let connectable: Function;
 
 	let tx: Transaction | null = null;
 
+	let dag: Promise<DagRepo>;
+
 	setContext('connectable', connectable);
 
 	onMount(async () => {
+		const { createDagRepo } = await import('../lib/dagRepo');
+
 		tx = Transaction.create();
+		dag = await createDagRepo();
+		console.log({ dag });
 	});
 
 	function handleCommit(e: CustomEvent) {
 		const buffer = e.detail;
-		commits = [...commits, buffer];
+		commits = [...commits, buffer]; // add to list of commits
+		// dag.import(buffer); // also import it into our Repo's DAG
+
 		tx = Transaction.create(); // create new Tx, now that the old one is committed
 	}
 </script>
