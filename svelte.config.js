@@ -1,4 +1,5 @@
-import adapter from '@sveltejs/adapter-auto';
+// import adapter from '@sveltejs/adapter-auto';
+import adapter from '@sveltejs/adapter-static';
 import preprocess from 'svelte-preprocess';
 
 /** @type {import('@sveltejs/kit').Config} */
@@ -8,9 +9,12 @@ const config = {
 	preprocess: preprocess({
 		postcss: true
 	}),
-
 	kit: {
-		adapter: adapter(),
+		adapter: adapter({
+			pages: 'docs',
+			assets: 'docs'
+		}),
+		prerender: { default: true },
 		alias: {
 			$demo: './src/demo'
 		}
