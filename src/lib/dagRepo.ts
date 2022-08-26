@@ -2,8 +2,8 @@
 import { createRepo } from '../modules/repo.browser.js';
 
 import { DagAPI } from '../../node_modules/ipfs-core/src/components/dag/index';
-import { PinAPI } from '../../node_modules/ipfs-core/src/components/pin/index';
-import { BlockAPI } from '../../node_modules/ipfs-core/src/components/block/index';
+// import { PinAPI } from '../../node_modules/ipfs-core/src/components/pin/index';
+// import { BlockAPI } from '../../node_modules/ipfs-core/src/components/block/index';
 import * as dagcbor from '@ipld/dag-cbor';
 import * as raw from 'multiformats/codecs/raw';
 import { createImport } from '../../node_modules/ipfs-core/src/components/dag/import';
@@ -16,6 +16,8 @@ import * as dagJSON from '@ipld/dag-json';
 import * as dagJOSE from 'dag-jose';
 import { Multicodecs } from 'ipfs-core-utils/multicodecs';
 import { Multihashes } from 'ipfs-core-utils/multihashes';
+import { makeIterable } from './utils';
+import all from 'it-all';
 
 // import { createPreloader } from '../../node_modules/ipfs-core/src/preload';
 // import { Storage } from '../../node_modules/ipfs-core/src/components/storage';
@@ -49,9 +51,13 @@ export async function createDag() {
 /**
  * Add ipfs.dag functionality to ipfs-repo
  */
-// export interface DagRepo {}
+export type DagRepo = DagAPI & {
+	repo: IPFSRepo;
+	// block: BlockAPI;
+	// pin: PinAPI;
+};
 
-export class DagRepo {
+export class DagRepo extends DagAPI {
 	constructor({ repo, codecs, options }) {
 		const preload = false; //createPreloader(options.preload);
 
@@ -67,19 +73,21 @@ export class DagRepo {
 			loadHasher: options.ipld && options.ipld.loadHasher
 		});
 
-		const pin = new PinAPI({ repo, codecs });
-		const block = new BlockAPI({ repo, codecs, hashers, preload });
-		const dag = new DagAPI({ repo, codecs, hashers, preload });
+		super({ repo, codecs, hashers, preload }); // DagAPI
 
-		Object.assign(this, dag);
+		// this.pin = new PinAPI({ repo, codecs });
+		// this.block = new BlockAPI({ repo, codecs, hashers, preload });
+		this.repo = repo;
+	}
+
+	async importBuffer(buffer: Uint8Array) {
+		const it = await makeIterable([buffer]); // dag.import needs asyncIterable
+		const [{ root }] = await all(this.import(it));
+		return root.cid;
 	}
 }
 
-/**
- * @param {Options} options
- * @returns {Promise<any>}
- */
-export async function createDagRepo(options = {}): Promise<any> {
+export async function createDagRepo(options = {}): Promise<DagRepo> {
 	/**
 	 * @type {BlockCodec}
 	 */
