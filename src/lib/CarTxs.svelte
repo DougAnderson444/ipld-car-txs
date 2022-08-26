@@ -1,5 +1,7 @@
 <script>
-	import Transaction from './index.js';
+	// @ts-nocheck
+
+	import { Transaction } from '@douganderson444/ipld-car-txs';
 
 	let data = { some: 'data' };
 	let out;

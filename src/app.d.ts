@@ -12,3 +12,4 @@ declare namespace App {
 }
 
 declare module '@douganderson444/svelte-plumb';
+// declare module '@douganderson444/ipld-car-txs';

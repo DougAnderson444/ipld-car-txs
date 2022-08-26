@@ -49,6 +49,8 @@ export async function createDag() {
 /**
  * Add ipfs.dag functionality to ipfs-repo
  */
+// export interface DagRepo {}
+
 export class DagRepo {
 	constructor({ repo, codecs, options }) {
 		const preload = false; //createPreloader(options.preload);

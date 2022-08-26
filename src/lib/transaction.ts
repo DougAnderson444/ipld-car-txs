@@ -47,7 +47,7 @@ class Transaction {
 		this.blocks = [];
 	}
 
-	static create() {
+	static create(): Transaction {
 		return new this();
 	}
 

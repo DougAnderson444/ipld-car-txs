@@ -1,8 +1,14 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import type { UserConfig } from 'vite';
+import path from 'path';
 
 const config: UserConfig = {
 	plugins: [sveltekit()],
+	resolve: {
+		alias: {
+			'@douganderson444/ipld-car-txs': path.resolve('src/lib')
+		}
+	},
 	build: {
 		rollupOptions: {
 			plugins: [],
@@ -20,6 +26,9 @@ const config: UserConfig = {
 	},
 	optimization: {
 		minimize: true // false
+	},
+	optimizeDeps: {
+		include: ['svelte-plumb', 'it-merge']
 	},
 	ssr: { noExternal: ['@douganderson444/svelte-plumb/**'] } // does the trick
 };

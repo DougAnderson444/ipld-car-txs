@@ -4,9 +4,9 @@
 
 	import AddTx from './AddTx.svelte';
 	import LoadTx from './LoadTx.svelte';
-	import { Transaction } from '$lib/index.js';
+	import { Transaction } from '@douganderson444/ipld-car-txs';
 
-	import type { DagRepo } from '$lib/dagRepo';
+	import type { DagRepo } from '@douganderson444/ipld-car-txs';
 
 	export let commits: Uint8Array[] = [];
 	export let connectable: Function;
@@ -18,7 +18,7 @@
 	setContext('connectable', connectable);
 
 	onMount(async () => {
-		const { createDagRepo } = await import('../lib/dagRepo');
+		const { createDagRepo } = await import('@douganderson444/ipld-car-txs');
 
 		tx = Transaction.create();
 		dag = await createDagRepo();
@@ -34,6 +34,11 @@
 	}
 </script>
 
+<svelte:head>
+	<script>
+		window.global = window;
+	</script>
+</svelte:head>
 <div class="m-4 p-4 border-dashed border-2">
 	<AddTx bind:tx on:commit={handleCommit} />
 </div>

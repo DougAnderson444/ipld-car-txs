@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Transaction } from '$lib/index.js';
+	import type { Transaction } from '@douganderson444/ipld-car-txs';
 	import { tweened } from 'svelte/motion';
 	import { cubicOut } from 'svelte/easing';
 	import { flip } from 'svelte/animate';

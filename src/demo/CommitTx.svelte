@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
-	import type { Transaction } from '$lib/index.js';
+	import type { Transaction } from '@douganderson444/ipld-car-txs';
 
 	const dispatch = createEventDispatcher();
 

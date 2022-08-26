@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Transaction } from '$lib/index.js';
+	import { Transaction } from '@douganderson444/ipld-car-txs';
 
 	import { onMount } from 'svelte';
 
@@ -7,7 +7,9 @@
 
 	export let commit: Uint8Array;
 
-	let root, get, rootNode: object;
+	let root: any;
+	let get: any;
+	let rootNode: object;
 
 	onMount(async () => {
 		// read a transaction
