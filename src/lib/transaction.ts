@@ -41,7 +41,7 @@ const decode = ({ bytes, cid }) => {
 	return Block.create({ bytes, cid, codec, hasher });
 };
 
-class Transaction {
+export class Transaction {
 	constructor() {
 		Object.assign(this, mitt());
 		this.blocks = [];
@@ -104,5 +104,3 @@ class Transaction {
 		return size;
 	}
 }
-
-export default Transaction;
