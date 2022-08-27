@@ -80,6 +80,10 @@ export class DagRepo extends DagAPI {
 		this.repo = repo;
 	}
 
+	async getLocal(cid, options) {
+		return await this.get(cid, Object.assign(options, { preload: false })); // cannot preload, no networking
+	}
+
 	async importBuffer(buffer: Uint8Array) {
 		const it = await makeIterable([buffer]); // dag.import needs asyncIterable
 		const [{ root }] = await all(this.import(it));
