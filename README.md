@@ -1,6 +1,7 @@
 # IPLD CAR Transactions (txs)
 
-Use IPLD Blocks to add to IPLD one transaction at a time.
+1. Use IPLD Blocks to add to IPLD one transaction at a time.
+2. Import your commited transactions back into a DAG for further use.
 
 ## Install
 
@@ -11,7 +12,7 @@ npm install douganderson444/ipld-car-txs
 ## Usage API
 
 ```js
-import Transaction from '@douganderson444/ipld-car-txs';
+import { Transaction, createDagRepo } from '@douganderson444/ipld-car-txs';
 
 const run = async () => {
 	// start a basic transaction
@@ -49,4 +50,4 @@ run();
 
 ## Credits
 
-Inspired by [car-transaction](https://github.com/mikeal/car-transaction)
+Extended from the inspiration of [car-transaction](https://github.com/mikeal/car-transaction)
