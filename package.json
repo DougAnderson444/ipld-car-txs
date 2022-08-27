@@ -42,6 +42,7 @@
 		"ipfs-core-config": "^0.4.1",
 		"ipfs-core-utils": "^0.15.1",
 		"ipfs-repo": "^15.0.2",
+		"it-all": "^1.0.6",
 		"mitt": "^3.0.0",
 		"multiformats": "^9.7.1",
 		"process": "^0.11.10",
