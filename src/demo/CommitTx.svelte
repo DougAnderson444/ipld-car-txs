@@ -7,7 +7,6 @@
 	export let tx: Transaction;
 
 	async function hanldeCommit(e: Event) {
-		console.log('commit tx:', { tx });
 		const buffer = await tx.commit();
 		dispatch('commit', buffer);
 	}
