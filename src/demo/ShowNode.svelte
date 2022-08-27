@@ -11,7 +11,6 @@
 	let data;
 
 	onMount(async () => {
-		console.log({ node });
 		data = await get(node);
 	});
 </script>
