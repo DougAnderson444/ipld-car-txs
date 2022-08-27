@@ -34,6 +34,14 @@ const run = async () => {
 	const { some } = await get(sub);
 	// get retrieves the block and decodes it
 	if (some !== 'data') throw new Error('data error');
+
+	// import previously saved CAR buffers back into IPLD to reconstruct the DAG for the next transaction
+	dag = await createDagRepo(); // make a barebones dag repo for fast loading
+
+	const cid = await dag.importBuffer(buffer);
+
+	// now we can access our imported CAR dag using paths, to build our next transaction:
+	const got = await dag.getLocal(cid, { path: `/sub` });
 };
 
 run();
