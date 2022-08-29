@@ -19,6 +19,8 @@ import { Multihashes } from 'ipfs-core-utils/multihashes';
 import { makeIterable } from './utils';
 import all from 'it-all';
 
+import { Transaction } from './transaction';
+
 // import { createPreloader } from '../../node_modules/ipfs-core/src/preload';
 // import { Storage } from '../../node_modules/ipfs-core/src/components/storage';
 
@@ -78,10 +80,88 @@ export class DagRepo extends DagAPI {
 		// this.pin = new PinAPI({ repo, codecs });
 		// this.block = new BlockAPI({ repo, codecs, hashers, preload });
 		this.repo = repo;
+
+		this.rootCID;
+
+		this.tx = {
+			// TODO: Check for existing open transactions that havent been commited?
+			pending: Transaction.create(),
+			/**
+			 * When a Transaction is added, the dag should check the dag to see if the key already exists,
+			 * and link the prev value to build an iterable chain of versions.
+			 */
+			add: async ({ key, value }) => {
+				// check to see if the key already exists
+				let prev: CID | false = false;
+
+				if (this.rootCID)
+					try {
+						console.log(`Checking ${this.rootCID}/${key}`);
+						// prev = (await this.resolve(this.rootCID, { path: `/${key}` })).cid;
+						prev = (
+							await this.resolve(this.rootCID, {
+								preload: false,
+								path: `/${key}`
+							})
+						).cid;
+						console.log(`prev cid: `, prev.toString());
+						// add prev to dag chain as 'prev'
+					} catch (error) {
+						// prev doesnt exist, leave as false
+						console.log(`No prev ${key}`);
+					}
+				let txCid = await this.tx.pending.add({ [key]: { value, prev } });
+				return txCid;
+			},
+			/**
+			 * Once the Tx is committed, it's dag imported which merges the blocks into the existing DAG
+			 * Tx CID and prev Root CID is updated to new Root CID
+			 * and a new Transaction needs to be created
+			 */
+			commit: async () => {
+				const buffer = await this.tx.pending.commit();
+
+				// read the recently commited transaction
+				const { root, get } = await Transaction.load(buffer);
+				// root is a cid
+				const newTx = await get(root);
+
+				let currentDag = {};
+				try {
+					currentDag = await this.get(this.rootCID);
+				} catch (error) {
+					// brand new dag, leave current empty
+				}
+
+				console.log(`merge: `, Object.assign(currentDag, newTx));
+
+				try {
+					// merge newTx into Dag
+					this.rootCID = await this.put(Object.assign(currentDag, newTx), {
+						pin: true,
+						preload: false
+					});
+				} catch (error) {
+					console.warn('issue putting ', Object.assign(currentDag, newTx));
+				}
+
+				console.log(`this.rootCID: ${this.rootCID} `);
+
+				this.tx.pending = Transaction.create(); // once merged, refresh Tx
+				return buffer; // now save this delta to update your database, cloud, Arweave, peers, wherever
+			}
+		};
 	}
 
-	async getLocal(cid, options) {
-		return await this.get(cid, Object.assign(options, { preload: false })); // cannot preload, no networking
+	async getLocal(cid, options = {}) {
+		return (await this.get(cid, Object.assign(options, { preload: false }))).value; // cannot preload, no networking
+	}
+
+	async importBuffers(buffers: Uint8Array[]) {
+		for (const buffer of buffers) {
+			// TODO: assumes the last buffer imported holds the root CID, this may be a wrong assumption...
+			this.rootCID = await this.importBuffer(buffer);
+		}
 	}
 
 	async importBuffer(buffer: Uint8Array) {
@@ -128,7 +208,6 @@ export async function createDagRepo(options = {}): Promise<DagRepo> {
 		throw err;
 	}
 
-	console.log({ repo });
 	const repoConfig = await repo.config.getAll();
 
 	return new DagRepo({
