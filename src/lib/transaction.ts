@@ -70,6 +70,11 @@ export class Transaction {
 		return block.cid;
 	}
 
+	async get(block) {
+		const { cid, bytes, value } = await decode(block);
+		return { cid, bytes, value };
+	}
+
 	undo() {
 		return this.blocks.pop();
 	}

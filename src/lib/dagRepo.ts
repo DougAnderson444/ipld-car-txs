@@ -18,6 +18,7 @@ import { Multicodecs } from 'ipfs-core-utils/multicodecs';
 import { Multihashes } from 'ipfs-core-utils/multihashes';
 import { makeIterable } from './utils';
 import all from 'it-all';
+import mitt from 'mitt'; // a small emitter
 
 import { Transaction } from './transaction';
 
@@ -45,9 +46,9 @@ export async function repoInit(options = {}): Promise<IPFSRepo> {
 }
 
 export async function createDag() {
-	// const preload: PreloadOptions = { enabled: false }
+	const preload: PreloadOptions = { enabled: false };
 	const repo = await repoInit();
-	return new DagAPI({ repo, codecs: [raw, dagcbor], hashers: [sha256], preload: false });
+	return new DagAPI({ repo, codecs: [raw, dagcbor], hashers: [sha256], preload });
 }
 
 /**
@@ -57,6 +58,12 @@ export type DagRepo = DagAPI & {
 	repo: IPFSRepo;
 	// block: BlockAPI;
 	// pin: PinAPI;
+	getLocal: Function;
+	tx: {
+		pending: Transaction;
+		add: Function;
+		commit: Function;
+	};
 };
 
 export class DagRepo extends DagAPI {
@@ -77,6 +84,8 @@ export class DagRepo extends DagAPI {
 
 		super({ repo, codecs, hashers, preload }); // DagAPI
 
+		Object.assign(this, mitt()); // make this an emitter
+
 		// this.pin = new PinAPI({ repo, codecs });
 		// this.block = new BlockAPI({ repo, codecs, hashers, preload });
 		this.repo = repo;
@@ -93,24 +102,37 @@ export class DagRepo extends DagAPI {
 			add: async ({ key, value }) => {
 				// check to see if the key already exists
 				let prev: CID | false = false;
+				let existingTx = this.tx.pending.last
+					? (await this.tx.pending.get(this.tx.pending.last)).value
+					: {};
 
-				if (this.rootCID)
+				/**
+				 * First, check to see if there is a previous value in the existing Tx
+				 */
+				if (existingTx && existingTx[key]) {
+					// if so, track current tx cid as previous
+					prev = existingTx[key].current;
+				} else if (this.rootCID) {
+					/**
+					 * Otherwise, list previous transaction from the DAG, if exists
+					 */
 					try {
-						console.log(`Checking ${this.rootCID}/${key}`);
-						// prev = (await this.resolve(this.rootCID, { path: `/${key}` })).cid;
-						prev = (
-							await this.resolve(this.rootCID, {
-								preload: false,
-								path: `/${key}`
-							})
-						).cid;
-						console.log(`prev cid: `, prev.toString());
-						// add prev to dag chain as 'prev'
-					} catch (error) {
-						// prev doesnt exist, leave as false
-						console.log(`No prev ${key}`);
+						let rootObj = await this.getLocal(this.rootCID, {
+							preload: false
+						});
+						prev = rootObj[key]?.current || false;
+					} catch (msg) {
+						console.log(`no prev dag ${key}`, msg);
 					}
-				let txCid = await this.tx.pending.add({ [key]: { value, prev } });
+				}
+				let valCid = await this.tx.pending.add({ value });
+				/**
+				 * [key] overwrites existingTx[key], but that's ok since we stored any previous data in prev
+				 */
+				let newBlock = { ...existingTx, [key]: { current: valCid, prev } };
+				console.log({ newBlock });
+				let txCid = await this.tx.pending.add(newBlock);
+				this.emit('added', txCid);
 				return txCid;
 			},
 			/**
@@ -121,6 +143,9 @@ export class DagRepo extends DagAPI {
 			commit: async () => {
 				const buffer = await this.tx.pending.commit();
 
+				// load blocks in the local dag, or else "value not found" during dag.put(merged) - bug?
+				await this.importBuffer(buffer);
+
 				// read the recently commited transaction
 				const { root, get } = await Transaction.load(buffer);
 				// root is a cid
@@ -128,24 +153,24 @@ export class DagRepo extends DagAPI {
 
 				let currentDag = {};
 				try {
-					currentDag = await this.get(this.rootCID);
+					if (this.rootCID) currentDag = await this.getLocal(this.rootCID);
 				} catch (error) {
 					// brand new dag, leave current empty
+					console.log({ error });
 				}
 
-				console.log(`merge: `, Object.assign(currentDag, newTx));
+				let merged = Object.assign({}, currentDag, newTx);
 
 				try {
 					// merge newTx into Dag
-					this.rootCID = await this.put(Object.assign(currentDag, newTx), {
+					this.rootCID = await this.put(merged, {
 						pin: true,
 						preload: false
 					});
+					this.emit('rootCID', this.rootCID);
 				} catch (error) {
-					console.warn('issue putting ', Object.assign(currentDag, newTx));
+					console.warn('issue putting ', merged, error);
 				}
-
-				console.log(`this.rootCID: ${this.rootCID} `);
 
 				this.tx.pending = Transaction.create(); // once merged, refresh Tx
 				return buffer; // now save this delta to update your database, cloud, Arweave, peers, wherever
@@ -153,9 +178,9 @@ export class DagRepo extends DagAPI {
 		};
 	}
 
-	async getLocal(cid, options = {}) {
+	getLocal = async (cid, options = {}): any => {
 		return (await this.get(cid, Object.assign(options, { preload: false }))).value; // cannot preload, no networking
-	}
+	};
 
 	async importBuffers(buffers: Uint8Array[]) {
 		for (const buffer of buffers) {
