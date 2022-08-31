@@ -6,7 +6,7 @@
 
 	export let tx: Transaction;
 
-	async function hanldeCommit(e: Event) {
+	async function handleCommit(e: Event) {
 		const buffer = await tx.commit();
 		dispatch('commit', buffer);
 	}
@@ -15,6 +15,6 @@
 <div class="flex flex-row-reverse m-1 p-1 justify-items-end">
 	<button
 		class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg justify-end"
-		on:click={hanldeCommit}>Commit Tx</button
+		on:click={handleCommit}>Commit Tx</button
 	>
 </div>
