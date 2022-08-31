@@ -21,44 +21,50 @@
 			dag = globalThis.dag;
 		}
 
-		let key = 'Mobile Phone Number';
+		let key = 'Mobile';
 
-		await dag.tx.add({ key, value: '555-1234' });
+		await dag.tx.add({ key, value: Date.now() });
+		await dag.tx.add({ key: 'Landline', value: Date.now() });
+		await dag.tx.add({ key, value: Date.now() });
 		const firstBuffer = await dag.tx.commit(); // save this somewhere else, like Arweave
 
-		await dag.tx.add({ key, value: '555-555-1234' });
+		await dag.tx.add({ key, value: Date.now() });
 		const secondBuffer = await dag.tx.commit(); // data not duplicated, only new data needs to be saved
 
-		console.log(`dag.getLocal CID: ${dag.rootCID}`);
+		let root = await dag.getLocal(dag.rootCID);
+		console.log(root);
 
-		let latest = await dag.getLocal(dag.rootCID);
-		console.log(latest[key].value);
+		let current = (await dag.getLocal(root[key].current)).value;
+		console.log(current);
 
-		let prevValue = await dag.getLocal(latest[key].prev); // "555-555-1234" all the data is there
-		console.log(prevValue[key].value); // key.value
-
-		let pathValue = await dag.getLocal(dag.rootCID, { path: '/' + key }); // "555-555-1234" all the data is there
-		console.log({ pathValue }, pathValue.value); // key.value
-
-		// I can rebuild the dag from transactions on another machine
-		let rebuiltDag;
-		if (!globalThis.rebuiltDag) {
-			rebuiltDag = await createDagRepo({ path: 'rebuiltDag' }); // make a barebones dag repo for fast loading
-			globalThis.rebuiltDag = rebuiltDag;
-		} else {
-			rebuiltDag = globalThis.rebuiltDag;
+		if (root[key].prev) {
+			let prev = await dag.getLocal(root[key].prev); // "555-555-1234" all the data is there
+			console.log('prev.value', { prev }); // key.value
+			console.log(prev.value); // key.value
 		}
+		// let pathValue = await dag.getLocal(dag.rootCID, { path: '/' + key }); // "555-555-1234" all the data is there
 
-		await rebuiltDag.importBuffers([firstBuffer, secondBuffer]); // as many as you need
+		// // I can rebuild the dag from transactions on another machine
+		// let rebuiltDag;
+		// if (!globalThis.rebuiltDag) {
+		// 	rebuiltDag = await createDagRepo({ path: 'rebuiltDag' }); // make a barebones dag repo for fast loading
+		// 	globalThis.rebuiltDag = rebuiltDag;
+		// } else {
+		// 	rebuiltDag = globalThis.rebuiltDag;
+		// }
 
-		let current = await rebuiltDag.getLocal(dag.rootCID, { path: '/' + key });
+		// await rebuiltDag.importBuffers([firstBuffer, secondBuffer]); // as many as you need
 
-		let previous = await rebuiltDag.getLocal(dag.rootCID, {
-			path: `/${key}/prev`
-		});
+		// let current = await rebuiltDag.getLocal(dag.rootCID);
 
-		console.log({ current }, { previous });
-		//console.log(current.value, previous.value); // values out == data in
+		// let previous = await rebuiltDag.getLocal(dag.rootCID, {
+		// 	path: `/${key}`
+		// });
+
+		// console.log({ current });
+		// console.log({ previous });
+		// console.log(current[key].value); // values out == data in
+		// console.log(previous[key].value); // values out == data in
 	});
 </script>
 
