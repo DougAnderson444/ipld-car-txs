@@ -1,7 +1,49 @@
 # IPLD CAR Transactions (txs)
 
+WIP.
+
 1. Use IPLD Blocks to add to IPLD one transaction at a time.
-2. Import your commited transactions back into a DAG for further use.
+2. Import your commited transactions back into a DAG to build it further.
+
+## Why?
+
+Tag Dag Repo Builder. Because when you want to build a local first DAG one step at a time, and save each step into an external source (database, Arweave, p2p, wherever) you need a mechanism to do this.
+
+With IPFS DAG, it's all or nothing, so you would be saving a lot of duplicate data. But with IPLD, if we break the Dag building down into transactions, then we can save each transaction and avoid this duplication.
+
+We're building a DAG here, so previous CIDs from deeper down in the DAG can be linked to our current transaction we are building. So we also need a way to GET those links, with a label or a tag. So say I am building "Mobile Phone Number" as a Tag in my Dag, I would first:
+
+`cid = dag.put({"Mobile Phone Number": {value: : "555-1234"}})`
+
+Now any time someone looks up `rootCID["Mobile Phone Number"].value` they will get `"555-1234"`.
+
+But I forgot to add an area code, so I need to update:
+
+`newCid = dag.put({"Mobile Phone Number": {value: "555-555-1234", prev: cid}})`
+
+Now `rootCID["Mobile Phone Number"].value` points to the new number, area code included.
+
+But if I go to save `newCid` to a database by exporting the CAR using `ipfs.dag.export(newCid)` I am ALSO going to save the data at `prev` which I may have already paid to save, so I am paying again for it. What we want to do is split the DAG building and saving process up into steps (transactions) so that we save each segment individually and thus avoid duplication.
+
+This is what this library does. So instead I can now do:
+
+```js
+await dag.tx.pending.add({ key: 'Mobile Phone Number', value: '555-1234' });
+firstBuffer = await dag.tx.pending.commit(); // save this somewhere else, like Arweave
+
+await dag.tx.pending.add({ key: 'Mobile Phone Number', value: '555-555-1234' });
+secondBuffer = await dag.tx.pending.commit(); // data not duplicated, only new data needs to be saved
+
+await dag.get(dag.rootCID, { path: '/Mobile Phone Number' }); // "555-555-1234"
+await dag.get(dag.rootCID, { path: '/Mobile Phone Number/prev' }); // "555-1234" all the data is there
+
+// I can rebuild the dag from transactions on another machone
+await rebuiltDag.importBuffers([firstBuffer, secondBuffer]); // as many as you need
+
+let current = await rebuiltDag.get(rebuiltDag.rootCID, { path: '/Mobile Phone Number' }); // "555-555-1234"
+
+let previous = await rebuiltDag.get(rebuiltDag.rootCID, { path: '/Mobile Phone Number/prev' }); // "555-1234" all the data is there
+```
 
 ## Install
 
