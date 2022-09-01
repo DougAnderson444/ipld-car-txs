@@ -19,6 +19,7 @@ import { Multihashes } from 'ipfs-core-utils/multihashes';
 import { makeIterable } from './utils';
 import all from 'it-all';
 import mitt from 'mitt'; // a small emitter
+import { CID } from 'multiformats';
 
 import { Transaction } from './transaction';
 
@@ -99,16 +100,30 @@ export class DagRepo extends DagAPI {
 			 * When a Transaction is added, the dag should check the dag to see if the key already exists,
 			 * and link the prev value to build an iterable chain of versions.
 			 */
+			getExistingTx: async () => {
+				let existingTx = {};
+				try {
+					console.log({ pending: this.tx.pending });
+					let last = this.tx.pending.last;
+					if (!last) return;
+					console.log({ last });
+					let lastBlock = await this.tx.pending.get(last);
+					console.log({ lastBlock });
+					existingTx = lastBlock.value;
+					console.log({ existingTx });
+				} catch (error) {
+					// console.log(`No existingTx`, error);
+				}
+				return existingTx;
+			},
 			add: async ({ key, value }) => {
 				// check to see if the key already exists
 				let prev: CID | false = false;
-				let existingTx = this.tx.pending.last
-					? (await this.tx.pending.get(this.tx.pending.last)).value
-					: {};
 
 				/**
 				 * First, check to see if there is a previous value in the existing Tx
 				 */
+				let existingTx = await this.tx.getExistingTx();
 				if (existingTx && existingTx[key]) {
 					// if so, track current tx cid as previous
 					prev = existingTx[key].current;
@@ -125,11 +140,11 @@ export class DagRepo extends DagAPI {
 						console.log(`no prev dag ${key}`, msg);
 					}
 				}
-				let valCid = await this.tx.pending.add({ value });
 				/**
 				 * [key] overwrites existingTx[key], but that's ok since we stored any previous data in prev
 				 */
-				let newBlock = { ...existingTx, [key]: { current: valCid, prev } };
+				let valCid = await this.tx.pending.add({ value });
+				let newBlock = Object.assign({}, existingTx, { [key]: { current: valCid, prev } });
 				console.log({ newBlock });
 				let txCid = await this.tx.pending.add(newBlock);
 				this.emit('added', txCid);
@@ -141,16 +156,10 @@ export class DagRepo extends DagAPI {
 			 * and a new Transaction needs to be created
 			 */
 			commit: async () => {
-				const buffer = await this.tx.pending.commit();
+				// get existing Tx to be commited
+				let existingTx = await this.tx.getExistingTx();
 
-				// load blocks in the local dag, or else "value not found" during dag.put(merged) - bug?
-				await this.importBuffer(buffer);
-
-				// read the recently commited transaction
-				const { root, get } = await Transaction.load(buffer);
-				// root is a cid
-				const newTx = await get(root);
-
+				// get current dag
 				let currentDag = {};
 				try {
 					if (this.rootCID) currentDag = await this.getLocal(this.rootCID);
@@ -159,18 +168,15 @@ export class DagRepo extends DagAPI {
 					console.log({ error });
 				}
 
-				let merged = Object.assign({}, currentDag, newTx);
+				// merge existing and current to make new root CID
+				let merged = Object.assign({}, currentDag, existingTx);
 
-				try {
-					// merge newTx into Dag
-					this.rootCID = await this.put(merged, {
-						pin: true,
-						preload: false
-					});
-					this.emit('rootCID', this.rootCID);
-				} catch (error) {
-					console.warn('issue putting ', merged, error);
-				}
+				// add and commit merged
+				this.rootCID = await this.tx.pending.add(merged);
+				const buffer = await this.tx.pending.commit();
+
+				// load commited blocks in the local dag
+				await this.importBuffer(buffer);
 
 				this.tx.pending = Transaction.create(); // once merged, refresh Tx
 				return buffer; // now save this delta to update your database, cloud, Arweave, peers, wherever
@@ -183,10 +189,15 @@ export class DagRepo extends DagAPI {
 	};
 
 	async importBuffers(buffers: Uint8Array[]) {
+		let root;
 		for (const buffer of buffers) {
 			// TODO: assumes the last buffer imported holds the root CID, this may be a wrong assumption...
-			this.rootCID = await this.importBuffer(buffer);
+			root = await this.importBuffer(buffer);
+
+			let rootVals = await rebuiltDag.getLocal(root);
+			console.log({ rootVals });
 		}
+		return root;
 	}
 
 	async importBuffer(buffer: Uint8Array) {

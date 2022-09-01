@@ -71,6 +71,7 @@ export class Transaction {
 	}
 
 	async get(block) {
+		console.log('get', block);
 		const { cid, bytes, value } = await decode(block);
 		return { cid, bytes, value };
 	}
