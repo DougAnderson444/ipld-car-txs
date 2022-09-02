@@ -28,11 +28,11 @@ But if I go to save `newCid` to a database by exporting the CAR using `ipfs.dag.
 This is what this library does. So instead I can now do:
 
 ```js
-await dag.tx.pending.add({ key: 'Mobile Phone Number', value: '555-1234' });
-firstBuffer = await dag.tx.pending.commit(); // save this somewhere else, like Arweave
+await dag.tx.add({ key: 'Mobile Phone Number', value: '555-1234' });
+firstBuffer = await dag.tx.commit(); // save this somewhere else, like Arweave
 
-await dag.tx.pending.add({ key: 'Mobile Phone Number', value: '555-555-1234' });
-secondBuffer = await dag.tx.pending.commit(); // data not duplicated, only new data needs to be saved
+await dag.tx.add({ key: 'Mobile Phone Number', value: '555-555-1234' });
+secondBuffer = await dag.tx.commit(); // data not duplicated, only new data needs to be saved
 
 await dag.get(dag.rootCID, { path: '/Mobile Phone Number' }); // "555-555-1234"
 await dag.get(dag.rootCID, { path: '/Mobile Phone Number/prev' }); // "555-1234" all the data is there
