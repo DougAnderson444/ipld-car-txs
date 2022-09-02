@@ -193,9 +193,6 @@ export class DagRepo extends DagAPI {
 		for (const buffer of buffers) {
 			// TODO: assumes the last buffer imported holds the root CID, this may be a wrong assumption...
 			root = await this.importBuffer(buffer);
-
-			let rootVals = await rebuiltDag.getLocal(root);
-			console.log({ rootVals });
 		}
 		return root;
 	}
