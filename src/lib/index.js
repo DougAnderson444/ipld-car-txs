@@ -3,4 +3,4 @@ export { default as CarTxs } from './CarTxs.svelte';
 export { default as Viz } from './Viz.svelte';
 export { Transaction } from './transaction';
 export { makeIterable } from './utils';
-export { createDagRepo, DagRepo } from './dagRepo';
+export { createDagRepo } from './dagRepo';
