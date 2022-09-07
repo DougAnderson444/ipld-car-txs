@@ -15,7 +15,7 @@
 		if (value) {
 			const cid = CID.asCID(value);
 			if (cid) {
-				resolved = await dag.getLocal(cid);
+				resolved = await dag.get(cid);
 			}
 		}
 	});

@@ -49,7 +49,7 @@
 		dag.on('rootCID', (evt) => (rootCID = dag.rootCID));
 	});
 
-	$: if (rootCID) dag.getLocal(rootCID).then((r: DagNode) => (rootObj = r));
+	$: if (rootCID) dag.get(rootCID).then((r: DagNode) => (rootObj = r));
 
 	async function handleCommit(e: CustomEvent) {
 		const buffer = e.detail;
