@@ -46,12 +46,6 @@ export async function repoInit(options = {}): Promise<IPFSRepo> {
 	return repo;
 }
 
-export async function createDag() {
-	const preload: PreloadOptions = { enabled: false };
-	const repo = await repoInit();
-	return new DagAPI({ repo, codecs: [raw, dagcbor], hashers: [sha256], preload });
-}
-
 /**
  * Add ipfs.dag functionality to ipfs-repo
  */
@@ -59,7 +53,6 @@ export type DagRepo = DagAPI & {
 	repo: IPFSRepo;
 	// block: BlockAPI;
 	// pin: PinAPI;
-	getLocal: Function;
 	tx: {
 		pending: Transaction;
 		add: Function;
@@ -69,8 +62,6 @@ export type DagRepo = DagAPI & {
 
 export class DagRepo extends DagAPI {
 	constructor({ repo, codecs, options }) {
-		const preload = false; //createPreloader(options.preload);
-
 		/** @type {MultihashHasher[]} */
 		const multihashHashers = Object.values(hashes);
 
@@ -83,12 +74,27 @@ export class DagRepo extends DagAPI {
 			loadHasher: options.ipld && options.ipld.loadHasher
 		});
 
-		super({ repo, codecs, hashers, preload }); // DagAPI
+		super({
+			repo,
+			codecs,
+			hashers,
+			preload: (cid) => {
+				return;
+			}
+		}); // DagAPI
 
 		Object.assign(this, mitt()); // make this an emitter
 
 		// this.pin = new PinAPI({ repo, codecs });
-		// this.block = new BlockAPI({ repo, codecs, hashers, preload });
+		// this.block = new BlockAPI({
+		// 	repo,
+		// 	codecs,
+		// 	hashers,
+		// 	preload: (cid) => {
+		// 		return;
+		// 	}
+		// });
+
 		this.repo = repo;
 
 		this.rootCID;
@@ -97,7 +103,7 @@ export class DagRepo extends DagAPI {
 			// TODO: Check for existing open transactions that havent been commited?
 			pending: Transaction.create(),
 			/**
-			 * When a Transaction is added, the dag should check the dag to see if the key already exists,
+			 * When a Transaction is added, the dag should check the dag to see if the tag already exists,
 			 * and link the prev value to build an iterable chain of versions.
 			 */
 			getExistingTx: async () => {
@@ -116,35 +122,33 @@ export class DagRepo extends DagAPI {
 				}
 				return existingTx;
 			},
-			add: async ({ key, value }) => {
-				// check to see if the key already exists
+			add: async (tag: string, tagNode: object) => {
+				// check to see if the tag already exists
 				let prev: CID | false = false;
 
 				/**
 				 * First, check to see if there is a previous value in the existing Tx
 				 */
 				let existingTx = await this.tx.getExistingTx();
-				if (existingTx && existingTx[key]) {
+				if (existingTx && existingTx[tag]) {
 					// if so, track current tx cid as previous
-					prev = existingTx[key].current;
+					prev = existingTx[tag].current;
 				} else if (this.rootCID) {
 					/**
 					 * Otherwise, list previous transaction from the DAG, if exists
 					 */
 					try {
-						let rootObj = await this.getLocal(this.rootCID, {
-							preload: false
-						});
-						prev = rootObj[key]?.current || false;
+						let rootObj = (await this.get(this.rootCID)).value;
+						prev = rootObj[tag]?.current || false;
 					} catch (msg) {
-						console.log(`no prev dag ${key}`, msg);
+						console.log(`no prev dag ${tag}`, msg);
 					}
 				}
 				/**
-				 * [key] overwrites existingTx[key], but that's ok since we stored any previous data in prev
+				 * [tag] overwrites existingTx[tag], but that's ok since we stored any previous data in prev
 				 */
-				let valCid = await this.tx.pending.add({ value });
-				let newBlock = Object.assign({}, existingTx, { [key]: { current: valCid, prev } });
+				let tagNodeCid = await this.tx.pending.add(tagNode);
+				let newBlock = Object.assign({}, existingTx, { [tag]: { current: tagNodeCid, prev } });
 				console.log({ newBlock });
 				let txCid = await this.tx.pending.add(newBlock);
 				this.emit('added', txCid);
@@ -162,7 +166,7 @@ export class DagRepo extends DagAPI {
 				// get current dag
 				let currentDag = {};
 				try {
-					if (this.rootCID) currentDag = await this.getLocal(this.rootCID);
+					if (this.rootCID) currentDag = (await this.get(this.rootCID)).value;
 				} catch (error) {
 					// brand new dag, leave current empty
 					console.log({ error });
@@ -183,10 +187,6 @@ export class DagRepo extends DagAPI {
 			}
 		};
 	}
-
-	getLocal = async (cid, options = {}): any => {
-		return (await this.get(cid, Object.assign(options, { preload: false }))).value; // cannot preload, no networking
-	};
 
 	async importBuffers(buffers: Uint8Array[]) {
 		let root;
