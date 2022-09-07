@@ -25,26 +25,6 @@ Now `rootCID["Mobile Phone Number"].value` points to the new number, area code i
 
 But if I go to save `newCid` to a database by exporting the CAR using `ipfs.dag.export(newCid)` I am ALSO going to save the data at `prev` which I may have already paid to save, so I am paying again for it. What we want to do is split the DAG building and saving process up into steps (transactions) so that we save each segment individually and thus avoid duplication.
 
-This is what this library does. So instead I can now do:
-
-```js
-await dag.tx.add('Mobile', { number: '555-1234' });
-firstBuffer = await dag.tx.commit(); // save this somewhere else, like Arweave
-
-await dag.tx.add('Mobile', { number: '555-555-1234' });
-secondBuffer = await dag.tx.commit(); // data not duplicated, only new data needs to be saved
-
-await dag.get(dag.rootCID, { path: '/Mobile/current/number' }); // "555-555-1234"
-await dag.get(dag.rootCID, { path: '/Mobile/prev/number' }); // "555-1234" all the data is there
-
-// I can rebuild the dag from transactions on another machone
-await rebuiltDag.importBuffers([firstBuffer, secondBuffer]); // as many as you need
-
-let current = await rebuiltDag.get(rebuiltDag.rootCID, { path: '/Mobile Phone Number' }); // "555-555-1234"
-
-let previous = await rebuiltDag.get(rebuiltDag.rootCID, { path: '/Mobile Phone Number/prev' }); // "555-1234" all the data is there
-```
-
 ## Install
 
 ```
@@ -54,37 +34,37 @@ npm install douganderson444/ipld-car-txs
 ## Usage API
 
 ```js
-import { Transaction, createDagRepo } from '@douganderson444/ipld-car-txs';
+import { createDagRepo } from '@douganderson444/ipld-car-txs';
 
 const run = async () => {
-	// start a basic transaction
-	const t = Transaction.create();
+	let dag = await createDagRepo(); // make a barebones dag repo for fast loading
 
-	// listen for size updates for this transaction
-	t.on('size', (e) => console.log('Size is ', t.size, ' bytes'));
+	let key = 'Mobile';
+	let key2 = 'Landline';
 
-	const subCID = await t.add({ some: 'data' });
-	await t.add({ sub: subCID });
-	await t.add({ whoops: 'mistake' });
-	t.undo(); // remove the last addition
-	const buffer = await t.commit(); // turn the txn blocks into a
+	await dag.tx.add(key, { number: '555-1234' });
+	const firstBuffer = await dag.tx.commit(); // save this somewhere else, like Arweave
 
-	// read a transaction
-	// the last write is always the root
-	const { root, get } = await Transaction.load(buffer);
-	// root is a cid
-	const { sub } = await get(root);
-	const { some } = await get(sub);
-	// get retrieves the block and decodes it
-	if (some !== 'data') throw new Error('data error');
+	await dag.tx.add(key, { number: '212-555-1234' }); // now there is a Mobile/prev/number, 555-1234
+	await dag.tx.add(key2, { number: '555-555-1234' });
+	const secondBuffer = await dag.tx.commit(); // data not duplicated, only new data needs to be saved
 
-	// import previously saved CAR buffers back into IPLD to reconstruct the DAG for the next transaction
-	dag = await createDagRepo(); // make a barebones dag repo for fast loading
+	let currentNumber = (await dag.get(dag.rootCID, { path: `/${key}/current/number` })).value;
+	console.log({ currentNumber }); // 212-555-1234
 
-	const cid = await dag.importBuffer(buffer);
+	let prevNumber = (await dag.get(dag.rootCID, { path: `/${key}/prev/number` })).value;
+	console.log({ prevNumber }); // 555-1234
 
-	// now we can access our imported CAR dag using paths, to build our next transaction:
-	const got = await dag.getLocal(cid, { path: `/sub` });
+	// I can rebuild the dag from transactions on another machine
+	let rebuiltDag = await createDagRepo({ path: 'rebuiltDag' }); // make a barebones dag repo for fast
+
+	const root = await rebuiltDag.importBuffers([firstBuffer, secondBuffer]);
+
+	// if you have the last buffer, then root will equal dag.rootCID
+
+	let rebuiltCurrent = (await rebuiltDag.get(dag.rootCID, { path: `/${key}/current/number` }))
+		.value;
+	console.log({ rebuiltCurrent });
 };
 
 run();
