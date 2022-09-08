@@ -122,7 +122,7 @@ export class DagRepo extends DagAPI {
 				}
 				return existingTx;
 			},
-			add: async (tag: string, tagNode: object) => {
+			add: async (tag: string, tagNode: object): Promise<CID> => {
 				// check to see if the tag already exists
 				let prev: CID | false = false;
 
