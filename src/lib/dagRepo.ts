@@ -144,7 +144,6 @@ export class DagRepo extends DagAPI {
 				 */
 				let tagNodeCid = await this.tx.pending.add(tagNode);
 				let newBlock = Object.assign({}, existingTx, { [tag]: { current: tagNodeCid, prev } });
-				console.log({ newBlock });
 				let txCid = await this.tx.pending.add(newBlock);
 				this.emit('added', txCid);
 				return txCid;
