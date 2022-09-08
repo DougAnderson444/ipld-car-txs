@@ -70,6 +70,8 @@ const run = async () => {
 run();
 ```
 
+### Encode(value)
+
 For convenience, `encode(value)` is also exported, which allows you to encode `objects` and raw `bytes` into a Block, returning Block which is `{value, bytes, cid}`.
 
 ```js
