@@ -18,7 +18,8 @@ const config = {
 		alias: {
 			$demo: './src/demo'
 		}
-	}
+	},
+	package: {}
 };
 
 export default config;
