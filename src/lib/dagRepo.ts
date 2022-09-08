@@ -108,14 +108,10 @@ export class DagRepo extends DagAPI {
 			getExistingTx: async () => {
 				let existingTx = {};
 				try {
-					console.log({ pending: this.tx.pending });
 					let last = this.tx.pending.last;
 					if (!last) return;
-					console.log({ last });
 					let lastBlock = await this.tx.pending.get(last);
-					console.log({ lastBlock });
 					existingTx = lastBlock.value;
-					console.log({ existingTx });
 				} catch (error) {
 					// console.log(`No existingTx`, error);
 				}
@@ -140,7 +136,7 @@ export class DagRepo extends DagAPI {
 						let rootObj = (await this.get(this.rootCID)).value;
 						prev = rootObj[tag]?.current || false;
 					} catch (msg) {
-						console.log(`no prev dag ${tag}`, msg);
+						// console.log(`no prev dag ${tag}`, msg);
 					}
 				}
 				/**
