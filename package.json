@@ -13,7 +13,8 @@
 		"lint": "prettier --check .",
 		"format": "prettier --write .",
 		"build:ipfs-repo": "esbuild ./node_modules/ipfs-core-config/src/repo.browser.js --bundle --minify --format=esm --sourcemap --main-fields=browser,module,main --inject:./src/node-globals.js --define:globalThis.process.env.NODE_ENV='\"production\"' --splitting --outdir=./src/lib/modules",
-		"build:dag-api": "esbuild ./node_modules/ipfs-core/src/components/dag/index.js --bundle --minify --format=esm --sourcemap --main-fields=browser,module,main --inject:./src/node-globals.js --define:globalThis.process.env.NODE_ENV='\"production\"' --splitting --outdir=./src/lib/modules/DagAPI"
+		"build:dag-api": "esbuild ./node_modules/ipfs-core/src/components/dag/index.js --bundle --minify --format=esm --sourcemap --main-fields=browser,module,main --inject:./src/node-globals.js --define:globalThis.process.env.NODE_ENV='\"production\"' --splitting --outdir=./src/lib/modules/DagAPI",
+		"build:car-buffer-writer": "esbuild ./node_modules/@ipld/car/esm/lib/buffer-writer.js --bundle --minify --format=esm --sourcemap --main-fields=browser,module,main --inject:./src/node-globals.js --define:globalThis.process.env.NODE_ENV='\"production\"' --splitting --outdir=./src/lib/modules"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "next",
