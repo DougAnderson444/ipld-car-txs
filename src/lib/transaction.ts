@@ -12,7 +12,7 @@ import mitt from 'mitt'; // a small emitter
 
 const { isBinary } = byteslib;
 
-const encode = (value) => {
+export const encode = (value) => {
 	if (isBinary(value)) {
 		return Block.encode({ value, hasher: sha256, codec: raw });
 	}

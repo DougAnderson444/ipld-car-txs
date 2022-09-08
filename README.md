@@ -70,6 +70,14 @@ const run = async () => {
 run();
 ```
 
+For convenience, `encode(value)` is also exported, which allows you to encode `objects` and raw `bytes` into a Block, returning Block which is `{value, bytes, cid}`.
+
+```js
+const value = { hello: 'world' }; // object
+const value = new TextEncoder().encode(JSON.stringify({ hello: 'world' })); // or bytes
+const { value, bytes, cid } = encode(value);
+```
+
 ## Credits
 
 Extended from the inspiration of [car-transaction](https://github.com/mikeal/car-transaction)
