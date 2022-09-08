@@ -1,12 +1,11 @@
-// import { createRepo } from '../../node_modules/ipfs-core-config/src/repo.browser.js'; // breaks on build, mortice issue
-import { createRepo } from '../modules/repo.browser.js';
+// import { createRepo } from 'ipfs-core-config/src/repo.browser.js'; // breaks on build, mortice issue
+import { createRepo } from './modules/repo.browser.js'; // esbuilt in package.json
+import { DagAPI } from './modules/DagAPI/index.js'; // esbuilt, because self not defined in base64-js
 
-import { DagAPI } from '../../node_modules/ipfs-core/src/components/dag/index';
-// import { PinAPI } from '../../node_modules/ipfs-core/src/components/pin/index';
-// import { BlockAPI } from '../../node_modules/ipfs-core/src/components/block/index';
+// import { PinAPI } from 'ipfs-core/src/components/pin/index';
+// import { BlockAPI } from 'ipfs-core/src/components/block/index';
 import * as dagcbor from '@ipld/dag-cbor';
 import * as raw from 'multiformats/codecs/raw';
-import { createImport } from '../../node_modules/ipfs-core/src/components/dag/import';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { identity } from 'multiformats/hashes/identity';
 import { hashes, codecs } from 'multiformats/basics';
@@ -23,8 +22,8 @@ import { CID } from 'multiformats';
 
 import { Transaction } from './transaction';
 
-// import { createPreloader } from '../../node_modules/ipfs-core/src/preload';
-// import { Storage } from '../../node_modules/ipfs-core/src/components/storage';
+// import { createPreloader } from 'ipfs-core/src/preload';
+// import { Storage } from 'ipfs-core/src/components/storage';
 
 import type { IPFSRepo } from 'ipfs-repo'; // https://github.com/ipfs/js-ipfs-repo/blob/master/packages/ipfs-repo/src/types.ts
 import type { PreloadOptions } from 'ipfs-core';
