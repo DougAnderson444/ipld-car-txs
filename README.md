@@ -41,13 +41,7 @@ Object.assign(ipfs.dag, yourDagRepo);
 
 Now you should be able to use `ipfs.dag.tx.add(tag, {key: value})`
 
-You can also use `importBuffer(dag: DagAPI, buffer: Uint8Array)` on your DagAPI:
-
-```js
-import { importBuffer } from '@douganderson444/ipld-car-txs';
-
-await importBuffer(ipfs.dag, someCarByteBuffer);
-```
+### DagRepo usage
 
 ```js
 import { createDagRepo } from '@douganderson444/ipld-car-txs';
@@ -94,6 +88,16 @@ For convenience, `encode(value)` is also exported, which allows you to encode `o
 const value = { hello: 'world' }; // object
 const value = new TextEncoder().encode(JSON.stringify({ hello: 'world' })); // or bytes
 const { value, bytes, cid } = encode(value);
+```
+
+### Import Buffer into ipfs.dag
+
+Normally you can only `ipfs.dag.import()` a car file, but with this library you'd want to import a `buffer`. You can also use `importBuffer(dag: DagAPI, buffer: Uint8Array)` on your DagAPI:
+
+```js
+import { importBuffer } from '@douganderson444/ipld-car-txs';
+
+await importBuffer(ipfs.dag, someCarByteBuffer);
 ```
 
 ## Credits
