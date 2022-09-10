@@ -33,6 +33,22 @@ npm install douganderson444/ipld-car-txs
 
 ## Usage API
 
+Using ipfs.dag already? Extend the functionality with
+
+```js
+Object.assign(ipfs.dag, yourDagRepo);
+```
+
+Now you should be able to use `ipfs.dag.tx.add(tag, {key: value})`
+
+You can also use `importBuffer(dag: DagAPI, buffer: Uint8Array)` on your DagAPI:
+
+```js
+import { importBuffer } from '@douganderson444/ipld-car-txs';
+
+await importBuffer(ipfs.dag, someCarByteBuffer);
+```
+
 ```js
 import { createDagRepo } from '@douganderson444/ipld-car-txs';
 

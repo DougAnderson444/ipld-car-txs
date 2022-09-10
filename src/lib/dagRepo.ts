@@ -192,10 +192,14 @@ export class DagRepo extends DagAPI {
 	}
 
 	async importBuffer(buffer: Uint8Array) {
-		const it = await makeIterable([buffer]); // dag.import needs asyncIterable
-		const [{ root }] = await all(this.import(it));
-		return root.cid;
+		return importBuffer(this, buffer);
 	}
+}
+
+export async function importBuffer(dag: DagAPI, buffer: Uint8Array) {
+	const it = await makeIterable([buffer]); // dag.import needs asyncIterable
+	const [{ root }] = await all(dag.import(it));
+	return root.cid;
 }
 
 export async function createDagRepo(options = {}): Promise<DagRepo> {
