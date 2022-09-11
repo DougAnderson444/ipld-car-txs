@@ -59,10 +59,10 @@ const run = async () => {
 	await dag.tx.add(key2, { number: '555-555-1234' });
 	const secondBuffer = await dag.tx.commit(); // data not duplicated, only new data needs to be saved
 
-	let currentNumber = (await dag.get(dag.rootCID, { path: `/${key}/current/number` })).value;
+	let currentNumber = (await dag.get(dag.rootCID, { path: `/${key}/obj/number` })).value;
 	console.log({ currentNumber }); // 212-555-1234
 
-	let prevNumber = (await dag.get(dag.rootCID, { path: `/${key}/prev/number` })).value;
+	let prevNumber = (await dag.get(dag.rootCID, { path: `/${key}/prev/obj/number` })).value;
 	console.log({ prevNumber }); // 555-1234
 
 	// I can rebuild the dag from transactions on another machine
@@ -72,8 +72,7 @@ const run = async () => {
 
 	// if you have the last buffer, then root will equal dag.rootCID
 
-	let rebuiltCurrent = (await rebuiltDag.get(dag.rootCID, { path: `/${key}/current/number` }))
-		.value;
+	let rebuiltCurrent = (await rebuiltDag.get(dag.rootCID, { path: `/${key}/obj/number` })).value;
 	console.log({ rebuiltCurrent });
 };
 
