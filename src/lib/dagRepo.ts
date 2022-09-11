@@ -127,7 +127,7 @@ export class DagRepo extends DagAPI {
 				let existingTx = await this.tx.getExistingTx();
 				if (existingTx && existingTx[tag]) {
 					// if so, track current tx cid as previous
-					prev = existingTx[tag].current;
+					prev = !!existingTx[tag] ? existingTx[tag] : false;
 				} else if (this.rootCID) {
 					/**
 					 * Otherwise, list previous transaction from the DAG, if exists
@@ -135,7 +135,6 @@ export class DagRepo extends DagAPI {
 					try {
 						let rootObj = (await this.get(this.rootCID)).value;
 						prev = !!rootObj[tag] ? rootObj[tag] : false;
-						console.log(prev);
 					} catch (msg) {
 						// console.log(`no prev dag ${tag}`, msg);
 					}
@@ -144,7 +143,7 @@ export class DagRepo extends DagAPI {
 				 * [tag] overwrites existingTx[tag], but that's ok since we stored any previous data in prev
 				 */
 				let tagNodeCid = await this.tx.pending.add(tagNode);
-				let newBlock = Object.assign({}, existingTx, { [tag]: { current: tagNodeCid, prev } });
+				let newBlock = Object.assign({}, existingTx, { [tag]: { obj: tagNodeCid, prev } }); //item, node, root, cid?
 				let txCid = await this.tx.pending.add(newBlock);
 				this.emit('added', txCid);
 				return txCid;

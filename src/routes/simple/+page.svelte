@@ -31,11 +31,18 @@
 		await dag.tx.add(key2, { number: '555-555-1234' });
 		const secondBuffer = await dag.tx.commit(); // data not duplicated, only new data needs to be saved
 
-		let currentNumber = (await dag.get(dag.rootCID, { path: `/${key}/current/number` })).value;
+		await dag.tx.add(key, { number: '567-555-1234' });
+		const buffer3 = await dag.tx.commit(); // save this somewhere else, like Arweave
+
+		let currentNumber = (await dag.get(dag.rootCID, { path: `/${key}/obj/number` })).value;
 		console.log({ currentNumber });
 
-		let prevNumber = (await dag.get(dag.rootCID, { path: `/${key}/prev/number` })).value;
+		let prevNumber = (await dag.get(dag.rootCID, { path: `/${key}/prev/obj/number` })).value;
 		console.log({ prevNumber });
+
+		let prevPrevNumber = (await dag.get(dag.rootCID, { path: `/${key}/prev/prev/obj/number` }))
+			.value;
+		console.log({ prevPrevNumber });
 
 		// I can rebuild the dag from transactions on another machine
 		let rebuiltDag;
@@ -46,10 +53,9 @@
 			rebuiltDag = globalThis.rebuiltDag;
 		}
 
-		await rebuiltDag.importBuffers([firstBuffer, secondBuffer]); // as many as you need
+		await rebuiltDag.importBuffers([firstBuffer, secondBuffer, buffer3]); // as many as you need
 
-		let rebuiltCurrent = (await rebuiltDag.get(dag.rootCID, { path: `/${key}/current/number` }))
-			.value;
+		let rebuiltCurrent = (await rebuiltDag.get(dag.rootCID, { path: `/${key}/obj/number` })).value;
 		console.log({ rebuiltCurrent });
 	});
 </script>
