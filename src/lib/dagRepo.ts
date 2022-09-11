@@ -134,7 +134,8 @@ export class DagRepo extends DagAPI {
 					 */
 					try {
 						let rootObj = (await this.get(this.rootCID)).value;
-						prev = rootObj[tag]?.current || false;
+						prev = !!rootObj[tag] ? rootObj[tag] : false;
+						console.log(prev);
 					} catch (msg) {
 						// console.log(`no prev dag ${tag}`, msg);
 					}
