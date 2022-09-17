@@ -24,8 +24,12 @@
 		let key = 'Mobile';
 		let key2 = 'Landline';
 
+		await dag.tx.pending.add({ random: 'data' });
 		await dag.tx.add(key, { number: '555-1234' });
 		const firstBuffer = await dag.tx.commit(); // save this somewhere else, like Arweave
+
+		const tags = Object.keys((await dag.get(dag.rootCID)).value);
+		console.log('tags', tags);
 
 		await dag.tx.add(key, { number: '212-555-1234' });
 		await dag.tx.add(key2, { number: '555-555-1234' });
