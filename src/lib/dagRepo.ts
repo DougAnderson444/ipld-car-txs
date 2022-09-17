@@ -118,6 +118,12 @@ export class DagRepo extends DagAPI {
 				return existingTx;
 			},
 			add: async (tag: string, tagNode: object): Promise<CID> => {
+				if (!tagNode) return;
+				// cleanse input object of undefined values, IPLD doesnt like undefined properies
+				tagNode = Object.fromEntries(
+					Object.entries(tagNode).map(([k, v]) => (v === undefined ? [k, null] : [k, v]))
+				);
+
 				// check to see if the tag already exists
 				let prev: CID | false = false;
 
@@ -166,8 +172,15 @@ export class DagRepo extends DagAPI {
 					console.log({ error });
 				}
 
-				// merge existing and current to make new root CID
-				let merged = Object.assign({}, currentDag, existingTx);
+				// merge existing and current Tag Nodes to make new root CID
+				// Only Tag Nodes, so filter existingTx by if it has own properties obj and prev
+				let merged = Object.assign(
+					{},
+					currentDag,
+					Object.fromEntries(
+						Object.entries(existingTx).filter(([k, v]) => v.obj && v.hasOwnProperty('prev'))
+					)
+				);
 
 				// add and commit merged
 				this.rootCID = await this.tx.pending.add(merged);
