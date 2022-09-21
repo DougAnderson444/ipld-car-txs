@@ -14,7 +14,6 @@ const config = {
 			pages: 'docs',
 			assets: 'docs'
 		}),
-		prerender: { default: true },
 		alias: {
 			$demo: './src/demo'
 		}
