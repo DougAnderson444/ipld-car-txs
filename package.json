@@ -1,6 +1,6 @@
 {
 	"name": "@douganderson444/ipld-car-txs",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"main": "index.js",
 	"module": "index.js",
 	"scripts": {
@@ -41,7 +41,6 @@
 		"@ipld/dag-json": "^8.0.10",
 		"@ipld/dag-pb": "^2.1.17",
 		"dag-jose": "^2.0.1",
-		"ipfs-core": "^0.15.4",
 		"ipfs-core-config": "^0.4.1",
 		"ipfs-core-utils": "^0.15.1",
 		"ipfs-repo": "^15.0.2",
