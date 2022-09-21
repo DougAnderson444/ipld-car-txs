@@ -195,6 +195,14 @@ export class DagRepo extends DagAPI {
 		};
 	}
 
+	/**
+	 * Convenience function to get latest Tag object value
+	 */
+	async latest(tag: string) {
+		const res = await this.get(this.rootCID, { path: `/${tag}/obj` });
+		return res.value;
+	}
+
 	async importBuffers(buffers: Uint8Array[]) {
 		let root;
 		for (const buffer of buffers) {

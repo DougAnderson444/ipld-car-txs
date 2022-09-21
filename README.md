@@ -68,9 +68,11 @@ const run = async () => {
 	// I can rebuild the dag from transactions on another machine
 	let rebuiltDag = await createDagRepo({ path: 'rebuiltDag' }); // make a barebones dag repo for fast
 
+	// if you have the last buffer, then root will equal dag.rootCID
 	const root = await rebuiltDag.importBuffers([firstBuffer, secondBuffer]);
 
-	// if you have the last buffer, then root will equal dag.rootCID
+	// get the latest value of a Tag using dag.latest(tag)
+	const latestObj = await rebuiltDag.latest(key);
 
 	let rebuiltCurrent = (await rebuiltDag.get(dag.rootCID, { path: `/${key}/obj/number` })).value;
 	console.log({ rebuiltCurrent });
