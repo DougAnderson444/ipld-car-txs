@@ -104,3 +104,7 @@ await importBuffer(ipfs.dag, someCarByteBuffer);
 ## Credits
 
 Extended from the inspiration of [car-transaction](https://github.com/mikeal/car-transaction)
+
+## Build notes
+
+When building from scratch, you'll have to install `ipfs-core` and `ipfs-core-config` before running `build:ipfs-repo`, and `build:dag-api`
