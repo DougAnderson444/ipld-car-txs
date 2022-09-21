@@ -28,9 +28,8 @@ const config: UserConfig = {
 		minimize: true // false
 	},
 	optimizeDeps: {
-		include: ['svelte-plumb', 'it-merge']
-	},
-	ssr: { noExternal: ['@douganderson444/svelte-plumb/**'] } // does the trick
+		include: ['it-merge']
+	}
 };
 
 export default config;

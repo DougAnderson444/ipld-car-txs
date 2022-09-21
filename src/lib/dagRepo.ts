@@ -26,7 +26,6 @@ import { Transaction } from './transaction';
 // import { Storage } from 'ipfs-core/src/components/storage';
 
 import type { IPFSRepo } from 'ipfs-repo'; // https://github.com/ipfs/js-ipfs-repo/blob/master/packages/ipfs-repo/src/types.ts
-import type { PreloadOptions } from 'ipfs-core';
 
 export async function repoInit(options = {}): Promise<IPFSRepo> {
 	const repoPath = options.path || 'ipfs';
