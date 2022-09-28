@@ -104,6 +104,11 @@ export class DagRepo extends DagAPI {
 			 * When a Transaction is added, the dag should check the dag to see if the tag already exists,
 			 * and link the prev value to build an iterable chain of versions.
 			 */
+			checkSize: async (data: object): Promise<number> => {
+				const t = Transaction.create();
+				await t.add(data);
+				return t.size;
+			},
 			getExistingTx: async () => {
 				let existingTx = {};
 				try {
@@ -115,6 +120,12 @@ export class DagRepo extends DagAPI {
 					// console.log(`No existingTx`, error);
 				}
 				return existingTx;
+			},
+			addData: async (data: object): Promise<CID> => {
+				return await this.tx.pending.add(data);
+			},
+			addTag: async (tag: string, tagNode: object): Promise<CID> => {
+				return await this.tx.add(tag, tagNode);
 			},
 			add: async (tag: string, tagNode: object): Promise<CID> => {
 				if (!tagNode) return;
