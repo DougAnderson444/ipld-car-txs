@@ -1,11 +1,11 @@
-// import { createRepo } from 'ipfs-core-config/src/repo.browser.js'; // breaks on build, mortice issue
-import { createRepo as createBrowserIDB } from '../../node_modules/ipfs-core-config/src/repo.browser.js';
+import { createRepo as createBrowserIDB } from 'ipfs-core-config/repo'; // breaks on build, mortice issue
+// import { createRepo as createBrowserIDB } from '../../node_modules/ipfs-core-config/src/repo.browser.js';
 // import { createRepo } from './modules/repo.browser.js'; // esbuilt in package.json
 
 import { createRepo } from 'ipfs-repo';
 
-// import { DagAPI } from './modules/DagAPI/index.js'; // esbuilt, because self not defined in base64-js
-import { DagAPI } from '../../node_modules/ipfs-core/src/components/dag/index'; // esbuilt, because self not defined in base64-js
+import { DagAPI } from './modules/DagAPI/index.js'; // con: no treeshaking, but esbuilt because self not defined in base64-js
+// import { DagAPI } from '../../node_modules/ipfs-core/src/components/dag/index'; // con: cannot compose moudles this way
 
 // import { PinAPI } from 'ipfs-core/src/components/pin/index';
 // import { BlockAPI } from 'ipfs-core/src/components/block/index';

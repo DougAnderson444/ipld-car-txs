@@ -117,4 +117,4 @@ Extended from the inspiration of [car-transaction](https://github.com/mikeal/car
 
 ## Build notes
 
-When building from scratch, you'll have to install `ipfs-core` and `ipfs-core-config` before running `build:ipfs-repo`, and `build:dag-api`
+Until [sveltejs/kit/issues/2040](https://github.com/sveltejs/kit/issues/2040) is fixed, we have to programmatically change the `.ts` extension to `.js` in `./src/lib/index.ts`

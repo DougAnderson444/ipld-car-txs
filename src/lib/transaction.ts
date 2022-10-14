@@ -1,6 +1,6 @@
 // https://github.com/mikeal/car-transaction/blob/main/index.js
 
-import { CarBufferWriter as CBW } from '@ipld/car';
+import * as CBW from '@ipld/car/buffer-writer';
 // import * as CBW from '../../node_modules/@ipld/car/esm/lib/buffer-writer.js';
 // import * as CBW from '@ipld/car/esm/lib/buffer-writer.js'; // not exported
 // import * as CBW from './modules/buffer-writer.js'; // esbuild

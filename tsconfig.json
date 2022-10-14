@@ -2,7 +2,7 @@
 	"extends": "./.svelte-kit/tsconfig.json",
 	"compilerOptions": {
 		"allowJs": true,
-		"checkJs": true,
+		"checkJs": false,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
@@ -14,9 +14,28 @@
 			"$lib/*": ["src/lib/*"],
 			"$demo": ["src/demo"],
 			"$demo/*": ["src/demo/*"],
-			"@douganderson444/ipld-car-txs": ["src/lib"]
-		}
-	}
+			"@douganderson444/ipld-car-txs": ["src/lib"],
+			"@douganderson444/ipld-car-txs/*": ["src/lib/*"]
+		},
+		"plugins": [
+			{
+				"transform": "typescript-transform-extensions",
+				"extensions": {
+					".ts": ".js"
+				}
+			}
+		]
+	},
+	"include": [
+		"src/**/*.d.ts",
+		"src/**/*.js",
+		"src/**/*.ts",
+		"src/**/*.svelte",
+		"package/**/*.d.ts",
+		"package/**/*.js",
+		"package/**/*.ts",
+		"package/**/*.svelte"
+	]
 	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
 	//
 	// If you want to overwrite includes/excludes, make sure to copy over the relevant includes/excludes
