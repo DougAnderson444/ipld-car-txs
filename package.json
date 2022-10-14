@@ -1,17 +1,9 @@
 {
 	"name": "@douganderson444/ipld-car-txs",
-	"version": "0.0.16",
-	"exports": {
-		".": {
-			"import": "./dist/index.js"
-		},
-		"./web": "./dist/index.js",
-		"./browser": "./dist/index.js",
-		"./nodejs": "./index.js"
-	},
-	"browser": "dist/index.js",
+	"version": "0.0.17",
+	"browser": "./index.js",
 	"module": "./index.js",
-	"main": "dist/index.js",
+	"main": "./index.js",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "svelte-kit sync && vite build",
