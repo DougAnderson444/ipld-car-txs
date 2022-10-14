@@ -1,6 +1,6 @@
 {
 	"name": "@douganderson444/ipld-car-txs",
-	"version": "0.0.15",
+	"version": "0.0.16",
 	"exports": {
 		".": {
 			"import": "./dist/index.js"
@@ -10,7 +10,7 @@
 		"./nodejs": "./index.js"
 	},
 	"browser": "dist/index.js",
-	"module": "./src/lib/index.js",
+	"module": "./index.js",
 	"main": "dist/index.js",
 	"scripts": {
 		"dev": "vite dev",
