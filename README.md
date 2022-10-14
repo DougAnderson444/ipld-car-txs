@@ -1,9 +1,13 @@
 # IPLD CAR Transactions (txs)
 
-WIP.
-
 1. Use IPLD Blocks to add to IPLD one transaction at a time.
 2. Import your commited transactions back into a DAG to build it further.
+
+## All Imports
+
+```js
+import { Transaction, encode, createDagRepo, importBuffer } from '@douganderson444/ipld-car-txs';
+```
 
 ## Why?
 
@@ -28,7 +32,7 @@ But if I go to save `newCid` to a database by exporting the CAR using `ipfs.dag.
 ## Install
 
 ```
-npm install douganderson444/ipld-car-txs
+npm install @douganderson444/ipld-car-txs
 ```
 
 ## Usage API
@@ -43,11 +47,17 @@ Now you should be able to use `ipfs.dag.tx.add(tag, {key: value})`
 
 ### DagRepo usage
 
+You can leave `createDagRepo(options)` config options blank and the library will assume reasonable defaults for you.
+
 ```js
 import { createDagRepo } from '@douganderson444/ipld-car-txs';
 
 const run = async () => {
-	let dag = await createDagRepo(); // make a barebones dag repo for fast loading
+	let dag = await createDagRepo({
+		path: 'ipfs', // default is 'ipfs'
+		persist: false, // default is false; you can set true for browser IndexedDB
+		ipld: { codecs: {} } // ipld options, defaults include dagCBOR & dagJOSE
+	});
 
 	let key = 'Mobile';
 	let key2 = 'Landline';
