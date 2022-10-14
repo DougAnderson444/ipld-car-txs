@@ -1,6 +1,11 @@
 // import { createRepo } from 'ipfs-core-config/src/repo.browser.js'; // breaks on build, mortice issue
-import { createRepo } from './modules/repo.browser.js'; // esbuilt in package.json
-import { DagAPI } from './modules/DagAPI/index.js'; // esbuilt, because self not defined in base64-js
+import { createRepo as createBrowserIDB } from '../../node_modules/ipfs-core-config/src/repo.browser.js';
+// import { createRepo } from './modules/repo.browser.js'; // esbuilt in package.json
+
+import { createRepo } from 'ipfs-repo';
+
+// import { DagAPI } from './modules/DagAPI/index.js'; // esbuilt, because self not defined in base64-js
+import { DagAPI } from '../../node_modules/ipfs-core/src/components/dag/index'; // esbuilt, because self not defined in base64-js
 
 // import { PinAPI } from 'ipfs-core/src/components/pin/index';
 // import { BlockAPI } from 'ipfs-core/src/components/block/index';
@@ -9,7 +14,7 @@ import * as raw from 'multiformats/codecs/raw';
 import { sha256 } from 'multiformats/hashes/sha2';
 import { identity } from 'multiformats/hashes/identity';
 import { hashes, codecs } from 'multiformats/basics';
-import * as dagPB from '@ipld/dag-pb';
+// import * as dagPB from '@ipld/dag-pb'; // dont think I really need this
 import * as dagCBOR from '@ipld/dag-cbor';
 import * as dagJSON from '@ipld/dag-json';
 import * as dagJOSE from 'dag-jose';
@@ -21,6 +26,9 @@ import mitt from 'mitt'; // a small emitter
 import { CID } from 'multiformats';
 
 import { Transaction } from './transaction';
+
+import { MemoryDatastore } from 'datastore-core/memory';
+import { MemoryBlockstore } from 'blockstore-core/memory';
 
 // import { createPreloader } from 'ipfs-core/src/preload';
 // import { Storage } from 'ipfs-core/src/components/storage';
@@ -117,7 +125,8 @@ export class DagRepo extends DagAPI {
 					let lastBlock = await this.tx.pending.get(last);
 					existingTx = lastBlock.value;
 				} catch (error) {
-					// console.log(`No existingTx`, error);
+					// console.log(`No existingTx`);
+					return existingTx;
 				}
 				return existingTx;
 			},
@@ -140,7 +149,7 @@ export class DagRepo extends DagAPI {
 				/**
 				 * First, check to see if there is a previous value in the existing Tx
 				 */
-				let existingTx = await this.tx.getExistingTx();
+				let existingTx = (await this.tx.getExistingTx()) || null;
 				if (existingTx && existingTx[tag]) {
 					// if so, track current tx cid as previous
 					prev = !!existingTx[tag] ? existingTx[tag] : false;
@@ -159,7 +168,21 @@ export class DagRepo extends DagAPI {
 				 * [tag] overwrites existingTx[tag], but that's ok since we stored any previous data in prev
 				 */
 				let tagNodeCid = await this.tx.pending.add(tagNode);
-				let newBlock = Object.assign({}, existingTx, { [tag]: { obj: tagNodeCid, prev } }); //item, node, root, cid?
+
+				let filtered =
+					existingTx && Object.keys(existingTx).length !== 0
+						? Object.fromEntries(
+								Object.entries(existingTx).filter(
+									([k, v]) => v.hasOwnProperty('obj') && v.hasOwnProperty('prev')
+								)
+						  )
+						: null;
+
+				let newBlock =
+					filtered && Object.keys(filtered).length !== 0
+						? Object.assign({}, filtered, { [tag]: { obj: tagNodeCid, prev } })
+						: { [tag]: { obj: tagNodeCid, prev } };
+
 				let txCid = await this.tx.pending.add(newBlock);
 				this.emit('added', txCid);
 				return txCid;
@@ -177,23 +200,24 @@ export class DagRepo extends DagAPI {
 				let currentDag = {};
 				try {
 					if (this.rootCID) currentDag = (await this.get(this.rootCID)).value;
+
+					// merge existing and current Tag Nodes to make new root CID
+					// Only Tag Nodes, so filter existingTx by if it has own properties obj and prev
+					let merged = Object.assign(
+						{},
+						currentDag,
+						Object.fromEntries(
+							Object.entries(existingTx).filter(
+								([k, v]) => v.hasOwnProperty('obj') && v.hasOwnProperty('prev')
+							)
+						)
+					);
+					this.rootCID = await this.tx.pending.add(merged);
 				} catch (error) {
 					// brand new dag, leave current empty
-					console.log({ error });
+					if (this.rootCID) console.log('thats odd', { error });
 				}
 
-				// merge existing and current Tag Nodes to make new root CID
-				// Only Tag Nodes, so filter existingTx by if it has own properties obj and prev
-				let merged = Object.assign(
-					{},
-					currentDag,
-					Object.fromEntries(
-						Object.entries(existingTx).filter(([k, v]) => v.obj && v.hasOwnProperty('prev'))
-					)
-				);
-
-				// add and commit merged
-				this.rootCID = await this.tx.pending.add(merged);
 				const buffer = await this.tx.pending.commit();
 
 				// load commited blocks in the local dag
@@ -245,7 +269,7 @@ export async function createDagRepo(options = {}): Promise<DagRepo> {
 	};
 	/** @type {BlockCodec[]} */
 	const blockCodecs = Object.values(codecs);
-	[dagPB, dagCBOR, dagJSON, dagJOSE, id]
+	[dagCBOR, dagJSON, dagJOSE, id]
 		.concat((options.ipld && options.ipld.codecs) || [])
 		.forEach((codec) => blockCodecs.push(codec));
 
@@ -256,10 +280,35 @@ export async function createDagRepo(options = {}): Promise<DagRepo> {
 
 	const repoPath = options.path || 'ipfs';
 
-	const repo = createRepo(console.log, multicodecs, {
-		path: repoPath,
-		autoMigrate: true
-	});
+	let repo;
+
+	if (options?.persist) {
+		repo = createBrowserIDB(console.log, multicodecs, {
+			path: repoPath,
+			autoMigrate: true
+		});
+	} else {
+		// in memory
+		/**
+		 * @param {string} path - Where this repo is stored
+		 * @param {import('./types').loadCodec} loadCodec - a function that will load multiformat block codecs
+		 * @param {import('./types').Backends} backends - backends used by this repo
+		 * @param {Partial<Options>} [options] - Configuration
+		 * @returns {import('./types').IPFSRepo}
+		 */
+		repo = createRepo(
+			repoPath,
+			(codeOrName) => multicodecs.getCodec(codeOrName),
+			{
+				blocks: new MemoryBlockstore(),
+				datastore: new MemoryDatastore(),
+				root: new MemoryDatastore(),
+				keys: new MemoryDatastore(),
+				pins: new MemoryDatastore()
+			},
+			options
+		);
+	}
 
 	const initConfig = {}; // Datastore:{}
 
