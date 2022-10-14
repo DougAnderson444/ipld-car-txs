@@ -4,9 +4,14 @@ import path from 'path';
 
 const config: UserConfig = {
 	plugins: [sveltekit()],
+	server: {
+		fs: {
+			strict: false
+		}
+	},
 	resolve: {
 		alias: {
-			'@douganderson444/ipld-car-txs': path.resolve('src/lib')
+			'@douganderson444/ipld-car-txs': path.resolve('./')
 		}
 	},
 	build: {
