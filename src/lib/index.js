@@ -1,3 +1,3 @@
 // Re-export your entry components here
 export { Transaction, encode } from './transaction';
-export { createDagRepo, importBuffer } from './dagRepo';
+export { createDagRepo, DagRepo, importBuffer } from './dagRepo';
