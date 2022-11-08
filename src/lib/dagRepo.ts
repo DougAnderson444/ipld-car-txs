@@ -213,6 +213,7 @@ export class DagRepo extends DagAPI {
 						)
 					);
 					this.rootCID = await this.tx.pending.add(merged);
+					this.emit('rootCID', this.rootCID);
 				} catch (error) {
 					// brand new dag, leave current empty
 					if (this.rootCID) console.log('thats odd', { error });
