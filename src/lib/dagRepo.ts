@@ -224,7 +224,7 @@ export class DagRepo extends DagAPI {
 				await this.importBuffer(buffer);
 
 				this.tx.pending = Transaction.create(); // once merged, refresh Tx
-				this.emit('rootCID', this.rootCID.toString());
+				if (this.rootCID) this.emit('rootCID', this.rootCID.toString());
 				return buffer; // now save this delta to update your database, cloud, Arweave, peers, wherever
 			}
 		};
