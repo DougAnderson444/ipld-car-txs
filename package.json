@@ -1,6 +1,6 @@
 {
 	"name": "@douganderson444/ipld-car-txs",
-	"version": "0.0.23",
+	"version": "0.0.24",
 	"browser": "./index.js",
 	"module": "./index.js",
 	"main": "./index.js",
