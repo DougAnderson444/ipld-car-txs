@@ -232,8 +232,9 @@ export class DagRepo extends DagAPI {
 	/**
 	 * Convenience function to get latest Tag object value
 	 */
-	async latest(tag: string) {
-		const res = await this.get(this.rootCID, { path: `/${tag}/obj` });
+	async latest(tag: string, path?: string): Promise<any> {
+		const append = path ? `/${path}` : '';
+		const res = await this.get(this.rootCID, { path: `/${tag}/obj${append}` });
 		return res.value;
 	}
 
@@ -257,7 +258,13 @@ export async function importBuffer(dag: DagAPI, buffer: Uint8Array) {
 	return root.cid;
 }
 
-export async function createDagRepo(options = {}): Promise<DagRepo> {
+export async function createDagRepo(
+	options: {
+		persist?: boolean;
+		path?: string;
+		ipld?: any;
+	} = {}
+): Promise<DagRepo> {
 	/**
 	 * @type {BlockCodec}
 	 */

@@ -80,6 +80,9 @@ describe('Test ipld-car-txs', () => {
 		let k3 = (await dag.get(dag.rootCID, { path: `/${key3}/obj/dataCid` })).value;
 		expect(k3.more).toEqual('randomdata');
 
+		let k3shortcut = await dag.latest(key3, `dataCid/more`);
+		expect(k3shortcut).toEqual('randomdata');
+
 		let currentNumber = (await dag.get(dag.rootCID, { path: `/${key}/obj/number` })).value;
 
 		// currentNumber should be 567-555-1234
