@@ -40,6 +40,40 @@ npm install @douganderson444/ipld-car-txs
 Using ipfs.dag already? Extend the functionality with
 
 ```js
+import { createDagRepo, DagRepo } from '@douganderson444/ipld-car-txs';
+import type { DagRepo } from '@douganderson444/ipld-car-txs';
+
+// init the DagRepo
+const dag = await createDagRepo();
+
+// add a Tag Node
+await dag.tx.addTag('Phone', { number: '555-1234' });
+
+// Now Phone will resolve to last added value
+let currNumber = await dag.latest('Phone'); // { number: '555-1234' }
+
+// you can link data without a Tag as
+const dataCid = await dag.tx.addData({ timeline: `I've had this number for over a year now` });
+
+// update the tag to use the new linked data
+await dag.tx.addTag('Phone', { number: '555-555-1234', duration: dataCid });
+
+// Getting the latest duration timeline is easy:
+let howLong = await dag.latest('Phone', `duration/timeline`); // "I've had this number for over a year now"
+
+// or the long way
+currNumber = await dag.latest('Phone'); // { number: '555-555-1234', duration: dataCid }
+dur = await dag.get(currNumber.duration); // { timeline: I've... }
+dur.timeline; // I've had this number for over a year now
+
+// save or share the data with another location
+const buffer = await dag.tx.commit();
+
+// in their dag
+myRootCID = await theirDag.importBuffers([buffer]); // as many as you need
+```
+
+```js
 Object.assign(ipfs.dag, yourDagRepo);
 ```
 
@@ -53,39 +87,73 @@ You can leave `createDagRepo(options)` config options blank and the library will
 import { createDagRepo } from '@douganderson444/ipld-car-txs';
 
 const run = async () => {
-	let dag = await createDagRepo({
-		path: 'ipfs', // default is 'ipfs'
-		persist: false, // default is false; you can set true for browser IndexedDB
-		ipld: { codecs: {} } // ipld options, defaults include dagCBOR & dagJOSE
-	});
+	let data = { some: 'data' };
+	let out;
+	let key = 'bPhone';
+	let key2 = 'cMobile';
+	let key3 = 'dLanline';
 
-	let key = 'Mobile';
-	let key2 = 'Landline';
-
+	await dag.tx.pending.add({ random: 'data' });
 	await dag.tx.add(key, { number: '555-1234' });
-	const firstBuffer = await dag.tx.commit(); // save this somewhere else, like Arweave
+	const firstBuffer = await dag.tx.commit();
 
-	await dag.tx.add(key, { number: '212-555-1234' }); // now there is a Mobile/prev/number, 555-1234
+	let tags = Object.keys((await dag.get(dag.rootCID)).value);
+
+	// expect tags to be the same
+	expect(tags).toEqual([tag, key]);
+
+	const dataCid = await dag.tx.pending.add({ more: 'randomdata' });
+	await dag.tx.add(key, { number: '212-555-1234' });
 	await dag.tx.add(key2, { number: '555-555-1234' });
 	const secondBuffer = await dag.tx.commit(); // data not duplicated, only new data needs to be saved
 
+	tags = Object.keys((await dag.get(dag.rootCID)).value);
+	expect(tags).toEqual([tag, key, key2]);
+
+	await dag.tx.add(key, { number: '567-555-1234' });
+	await dag.tx.add(key3, { dataCid });
+	const buffer3 = await dag.tx.commit(); // save this somewhere else, like Arweave
+
+	tags = Object.keys((await dag.get(dag.rootCID)).value);
+	expect(tags).toEqual([tag, key, key2, key3]);
+
+	let k3 = (await dag.get(dag.rootCID, { path: `/${key3}/obj/dataCid` })).value;
+	expect(k3.more).toEqual('randomdata');
+
+	// You can also use the path shortcut to resolve deeply nested CIDs
+	let k3shortcut = await dag.latest(key3, `dataCid/more`);
+	expect(k3shortcut).toEqual('randomdata');
+
 	let currentNumber = (await dag.get(dag.rootCID, { path: `/${key}/obj/number` })).value;
-	console.log({ currentNumber }); // 212-555-1234
+
+	// currentNumber should be 567-555-1234
+	expect(currentNumber).toBe('567-555-1234');
 
 	let prevNumber = (await dag.get(dag.rootCID, { path: `/${key}/prev/obj/number` })).value;
-	console.log({ prevNumber }); // 555-1234
+
+	// prevNumber should be 212-555-1234
+	expect(prevNumber).toBe('212-555-1234');
+
+	let prevPrevNumber = (await dag.get(dag.rootCID, { path: `/${key}/prev/prev/obj/number` })).value;
+
+	// prevPrevNumber should be 555-1234
+	expect(prevPrevNumber).toBe('555-1234');
 
 	// I can rebuild the dag from transactions on another machine
-	let rebuiltDag = await createDagRepo({ path: 'rebuiltDag' }); // make a barebones dag repo for fast
+	let rebuiltDag;
+	if (!globalThis.rebuiltDag) {
+		rebuiltDag = await createDagRepo({ path: 'rebuiltDag' }); // make a barebones dag repo for fast loading
+		globalThis.rebuiltDag = rebuiltDag;
+	} else {
+		rebuiltDag = globalThis.rebuiltDag;
+	}
 
-	// if you have the last buffer, then root will equal dag.rootCID
-	const root = await rebuiltDag.importBuffers([firstBuffer, secondBuffer]);
-
-	// get the latest value of a Tag using dag.latest(tag)
-	const latestObj = await rebuiltDag.latest(key);
+	await rebuiltDag.importBuffers([firstBuffer, secondBuffer, buffer3]); // as many as you need
 
 	let rebuiltCurrent = (await rebuiltDag.get(dag.rootCID, { path: `/${key}/obj/number` })).value;
-	console.log({ rebuiltCurrent });
+
+	// rebuiltCurrent should be 567-555-1234
+	expect(rebuiltCurrent).toBe('567-555-1234');
 };
 
 run();
